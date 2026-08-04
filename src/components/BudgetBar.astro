@@ -1,0 +1,254 @@
+---
+import db from '../lib/db';
+
+// SSR: Calculate initial budget and progress values directly on the server
+const items = db.prepare('SELECT * FROM items').all();
+
+const totalEstimation = items.reduce((sum, item) => {
+  return sum + (item.estimatedPrice * item.quantity);
+}, 0);
+
+const checkedItems = items.filter(item => item.checked === 1);
+const totalActual = checkedItems.reduce((sum, item) => {
+  const price = item.actualPrice > 0 ? item.actualPrice : (item.estimatedPrice * item.quantity);
+  return sum + price;
+}, 0);
+
+const totalCount = items.length;
+const checkedCount = checkedItems.length;
+const percent = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
+
+function formatRupiah(number) {
+  return 'Rp ' + new Intl.NumberFormat('id-ID').format(number);
+}
+---
+
+<div class="budget-bar-fixed">
+  <!-- Progress Bar Row -->
+  <div class="progress-section">
+    <div class="progress-info">
+      <span id="progress-text">{checkedCount} dari {totalCount} barang selesai</span>
+      <span id="progress-percent">{percent}%</span>
+    </div>
+    <div class="progress-track">
+      <div id="progress-fill" class="progress-fill" style={`width: ${percent}%; ${percent === 100 && totalCount > 0 ? 'background-color: var(--color-brand);' : ''}`}></div>
+    </div>
+  </div>
+
+  <!-- Budget Summary Row -->
+  <div class="summary-details">
+    <div class="budget-col">
+      <span class="lbl">Estimasi Total</span>
+      <span id="total-estimation" class="val estimation-val">{formatRupiah(totalEstimation)}</span>
+    </div>
+    
+    <div class="budget-col">
+      <span class="lbl highlight">Total Belanja</span>
+      <span id="total-actual" class="val actual-val">{formatRupiah(totalActual)}</span>
+    </div>
+
+    <!-- Reset button is moved to index.astro -->
+  </div>
+</div>
+
+<style>
+  .budget-bar-fixed {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 540px;
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border-color-solid);
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    z-index: 99;
+    box-shadow: 0 -8px 32px rgba(21, 44, 34, 0.06);
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
+  }
+
+  /* Adapt to Dark Mode */
+  :global([data-theme="dark"]) .budget-bar-fixed {
+    background-color: rgba(14, 26, 21, 0.85);
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Progress styling */
+  .progress-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+  .progress-track {
+    height: 8px;
+    background-color: var(--border-color-solid);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background-color: var(--color-brand);
+    border-radius: 99px;
+    transition: width var(--transition-normal);
+  }
+
+  /* Budget stats */
+  .summary-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .budget-col {
+    display: flex;
+    flex-direction: column;
+  }
+  .budget-col .lbl {
+    font-size: 0.7rem;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+  }
+  .budget-col .lbl.highlight {
+    color: var(--color-brand);
+  }
+  .budget-col .val {
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+  .budget-col .estimation-val {
+    color: var(--text-primary);
+  }
+  .budget-col .actual-val {
+    color: var(--color-brand);
+  }
+
+
+</style>
+
+<script>
+  const progressText = document.getElementById('progress-text');
+  const progressPercent = document.getElementById('progress-percent');
+  const progressFill = document.getElementById('progress-fill');
+  const totalEstimationText = document.getElementById('total-estimation');
+  const totalActualText = document.getElementById('total-actual');
+  const clearAllBtn = document.getElementById('btn-clear-all');
+
+  function formatRupiah(number) {
+    return 'Rp ' + new Intl.NumberFormat('id-ID').format(number);
+  }
+
+  let hasTriggeredCompletion = false;
+
+  // Listen for updated database list events to calculate budget
+  window.addEventListener('budget-data-updated', (e: any) => {
+    const items = e.detail.items || [];
+    
+    const totalCount = items.length;
+    const checkedItems = items.filter(item => item.checked === 1);
+    const checkedCount = checkedItems.length;
+
+    // 1. Progress calculation
+    const percent = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
+    
+    if (progressText) progressText.textContent = `${checkedCount} dari ${totalCount} barang selesai`;
+    if (progressPercent) progressPercent.textContent = `${percent}%`;
+    if (progressFill) {
+      progressFill.style.width = `${percent}%`;
+      // Change progress fill color when done!
+      if (percent === 100 && totalCount > 0) {
+        progressFill.style.backgroundColor = 'var(--color-brand)';
+      } else {
+        progressFill.style.backgroundColor = '';
+      }
+    }
+
+    // 2. Budget calculation
+    const totalEstimation = items.reduce((sum, item) => {
+      return sum + (item.estimatedPrice * item.quantity);
+    }, 0);
+
+    const totalActual = checkedItems.reduce((sum, item) => {
+      const price = item.actualPrice > 0 ? item.actualPrice : (item.estimatedPrice * item.quantity);
+      return sum + price;
+    }, 0);
+
+    if (totalEstimationText) totalEstimationText.textContent = formatRupiah(totalEstimation);
+    if (totalActualText) totalActualText.textContent = formatRupiah(totalActual);
+
+    // Reset flag if progress drops below 100
+    if (percent < 100) {
+      hasTriggeredCompletion = false;
+    }
+
+    // 3. Trigger Completion Celebration
+    if (percent === 100 && totalCount > 0 && !hasTriggeredCompletion) {
+      hasTriggeredCompletion = true;
+      setTimeout(async () => {
+        if (typeof (window as any).showHistoryCompletionDialog === 'function') {
+          const confirmSave = await (window as any).showHistoryCompletionDialog();
+          if (confirmSave) {
+            try {
+              const res = await fetch('/api/history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'save_current' })
+              });
+              if (!res.ok) throw new Error();
+              
+              (window as any).showToast('Belanja selesai! Tersimpan di Riwayat.');
+              window.dispatchEvent(new CustomEvent('items-updated'));
+              window.dispatchEvent(new CustomEvent('history-updated'));
+            } catch (err) {
+              (window as any).showToast('Gagal menyimpan riwayat.', 'error');
+              hasTriggeredCompletion = false;
+            }
+          } else {
+            hasTriggeredCompletion = false; // reset if user cancels
+          }
+        }
+      }, 500); // 500ms delay for satisfying visual feedback
+    }
+  });
+
+  // Clear all event
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', async () => {
+      // Use premium showConfirm utility
+      const confirmClear = await (window as any).showConfirm(
+        'Kosongkan Keranjang',
+        'Apakah Anda yakin ingin menghapus seluruh daftar belanjaan aktif saat ini?'
+      );
+      
+      if (confirmClear) {
+        try {
+          const res = await fetch('/api/items?clearAll=true', {
+            method: 'DELETE'
+          });
+
+          if (!res.ok) throw new Error();
+
+          (window as any).showToast('Keranjang belanja berhasil dikosongkan.');
+          window.dispatchEvent(new CustomEvent('items-updated'));
+        } catch (err) {
+          (window as any).showToast('Gagal mengosongkan daftar belanja.', 'error');
+        }
+      }
+    });
+  }
+</script>

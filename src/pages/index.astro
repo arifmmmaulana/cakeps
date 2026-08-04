@@ -1,0 +1,180 @@
+---
+import Layout from '../layouts/Layout.astro';
+import BurgerMenu from '../components/BurgerMenu.astro';
+import AddItemForm from '../components/AddItemForm.astro';
+import ShoppingList from '../components/ShoppingList.astro';
+import BudgetBar from '../components/BudgetBar.astro';
+---
+
+<Layout title="Cakeps - Catatan Ke Pasar">
+  <main class="app-main animate-fade-in">
+    <!-- Header -->
+    <header class="app-header mb-6">
+      <div class="header-logo-section">
+        <span class="logo-emoji">🥬</span>
+        <div class="logo-text">
+          <h1>Cakeps</h1>
+          <p id="header-greeting">Catatan Ke Pasar Pintar</p>
+        </div>
+      </div>
+      
+      <!-- Burger Menu Toggle Button -->
+      <button onclick="window.toggleBurgerMenu && window.toggleBurgerMenu()" class="btn btn-secondary btn-icon" aria-label="Buka menu">
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Slide-out Burger Menu -->
+    <BurgerMenu />
+
+    <!-- Add Item Form Section -->
+    <AddItemForm />
+
+    <!-- Shopping Checklist Section -->
+    <ShoppingList />
+
+    <!-- Reset & Save Template Buttons -->
+    <div class="action-buttons-container">
+      <button id="btn-save-current" class="btn btn-action-save" title="Simpan daftar belanjaan aktif saat ini sebagai template">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+        Simpan Daftar
+      </button>
+      <button id="btn-clear-all" class="btn btn-secondary btn-action-reset" title="Kosongkan seluruh daftar belanja">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+        Kosongkan Daftar
+      </button>
+    </div>
+
+    <!-- Sticky Bottom Budget Summary -->
+    <BudgetBar />
+  </main>
+</Layout>
+
+<style>
+  .app-main {
+    padding: 1.5rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  /* Header Layout */
+  .app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1.5px solid var(--border-color);
+    padding-bottom: 1rem;
+    margin-top: 0.5rem;
+  }
+  .header-logo-section {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+  .logo-emoji {
+    font-size: 2.25rem;
+    filter: drop-shadow(0 4px 6px rgba(16, 185, 129, 0.2));
+  }
+  .logo-text h1 {
+    font-size: 1.6rem;
+    line-height: 1.1;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--color-brand), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .logo-text p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-top: 0.15rem;
+  }
+
+  .theme-btn {
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Action Buttons Container Styling */
+  .action-buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 2.25rem;
+    margin-bottom: 1rem;
+  }
+  .btn-action-save, .btn-action-reset {
+    flex: 1;
+    font-size: 0.85rem !important;
+    height: 44px;
+    padding: 0 0.5rem !important;
+  }
+  .btn-action-save {
+    background: linear-gradient(135deg, var(--color-accent), #ea580c);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.2);
+  }
+  .btn-action-save:hover {
+    background: linear-gradient(135deg, var(--color-accent-hover), var(--color-accent));
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.3);
+  }
+  .btn-action-reset {
+    border-color: var(--border-color-solid);
+    color: var(--text-secondary);
+  }
+  .btn-action-reset:hover {
+    color: var(--color-danger) !important;
+    border-color: var(--color-danger) !important;
+    background-color: var(--color-danger-light) !important;
+    transform: translateY(-1.5px);
+  }
+</style>
+
+<script>
+  // Event Save Template (tombol utama) listener
+  const saveCurrentBtn = document.getElementById('btn-save-current');
+  if (saveCurrentBtn) {
+    saveCurrentBtn.addEventListener('click', async () => {
+      const name = await (window as any).showPrompt(
+        'Simpan Template',
+        'Tulis nama template baru untuk daftar belanjaan saat ini:',
+        'Misal: Belanja Mingguan, Bulanan...'
+      );
+
+      if (!name) return; // User cancelled or empty
+
+      try {
+        const res = await fetch('/api/templates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'save', name })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Gagal menyimpan template.');
+        }
+
+        (window as any).showToast('Daftar belanja disimpan sebagai template!');
+
+        // Dispatch event to refresh TemplateManager list
+        window.dispatchEvent(new CustomEvent('templates-updated'));
+      } catch (err: any) {
+        (window as any).showToast(err.message, 'error');
+      }
+    });
+  }
+</script>

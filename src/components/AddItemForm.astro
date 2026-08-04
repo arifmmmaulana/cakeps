@@ -1,0 +1,287 @@
+---
+import { suggestions } from '../lib/suggestions';
+---
+
+<div class="card add-item-card mb-6 animate-slide-up">
+  <h3 class="mb-4 text-brand-title">🛒 Tambah Belanjaan</h3>
+  
+  <form id="add-item-form" class="add-form">
+    <!-- Row 1: Nama Barang & Autocomplete -->
+    <div class="form-group relative">
+      <label for="item-name">Nama Barang</label>
+      <div class="input-wrapper">
+        <input 
+          type="text" 
+          id="item-name" 
+          placeholder="Misal: Bayam, Tempe, Deterjen..." 
+          required 
+          autocomplete="off"
+        />
+        <div id="suggestions-box" class="suggestions-dropdown hidden"></div>
+      </div>
+    </div>
+
+    <!-- Row 2: Jumlah, Satuan, Harga Estimasi -->
+    <div class="form-row-three mt-3">
+      <div class="form-group">
+        <label for="item-qty">Jumlah</label>
+        <input type="number" id="item-qty" value="1" min="0.1" step="any" required />
+      </div>
+
+      <div class="form-group">
+        <label for="item-unit">Satuan</label>
+        <select id="item-unit">
+          <option value="pcs">pcs</option>
+          <option value="ikat">ikat</option>
+          <option value="kg">kg</option>
+          <option value="g">gram</option>
+          <option value="bungkus">bungkus</option>
+          <option value="buah">buah</option>
+          <option value="papan">papan</option>
+          <option value="liter">liter</option>
+          <option value="botol">botol</option>
+          <option value="sachet">sachet</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="item-price">HARGA/SATUAN</label>
+        <input type="number" id="item-price" placeholder="Rp 1.000" min="0" step="500" />
+      </div>
+    </div>
+
+    <!-- Row 3: Kategori & Tombol Tambah -->
+    <div class="form-row-two mt-3">
+      <div class="form-group">
+        <label for="item-category">Kategori</label>
+        <select id="item-category" required>
+          <option value="Sayuran">🥬 Sayuran</option>
+          <option value="Lauk/Daging">🍗 Lauk/Daging</option>
+          <option value="Bumbu">🌶️ Bumbu</option>
+          <option value="Sembako">🍚 Sembako</option>
+          <option value="Laundry">🧼 Laundry</option>
+          <option value="Cemilan">🍪 Cemilan</option>
+          <option value="Lain-lain">📦 Lain-lain</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-submit-add">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Tambah
+      </button>
+    </div>
+  </form>
+</div>
+
+<style>
+  .add-item-card {
+    border-top: 4px solid var(--color-brand);
+  }
+  .text-brand-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .add-form {
+    display: flex;
+    flex-direction: column;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .form-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .relative {
+    position: relative;
+  }
+  .form-row-three {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.5fr;
+    gap: 0.75rem;
+  }
+  .form-row-two {
+    display: grid;
+    grid-template-columns: 1.8fr 1.2fr;
+    gap: 0.75rem;
+    align-items: flex-end;
+  }
+  .btn-submit-add {
+    height: 48px; /* match select height */
+  }
+  .mt-3 {
+    margin-top: 0.75rem;
+  }
+
+  /* Suggestions styling */
+  .suggestions-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background-color: var(--bg-surface);
+    border: 1.5px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .suggestions-dropdown.hidden {
+    display: none;
+  }
+  .suggestion-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color var(--transition-fast);
+  }
+  .suggestion-item:last-child {
+    border-bottom: none;
+  }
+  .suggestion-item:hover {
+    background-color: var(--bg-surface-hover);
+  }
+  .suggestion-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+  }
+  .suggestion-info {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background-color: var(--border-color);
+    padding: 0.15rem 0.4rem;
+    border-radius: 6px;
+  }
+</style>
+
+<script define:vars={{ suggestions }}>
+  // Autocomplete suggestions mapping
+  const nameInput = document.getElementById('item-name');
+  const qtyInput = document.getElementById('item-qty');
+  const unitInput = document.getElementById('item-unit');
+  const priceInput = document.getElementById('item-price');
+  const categoryInput = document.getElementById('item-category');
+  const suggestionsBox = document.getElementById('suggestions-box');
+  const form = document.getElementById('add-item-form');
+
+  // Input listener for suggestion filtering
+  nameInput.addEventListener('input', (e) => {
+    const val = e.target.value.toLowerCase().trim();
+    if (!val) {
+      suggestionsBox.innerHTML = '';
+      suggestionsBox.classList.add('hidden');
+      return;
+    }
+
+    const filtered = suggestions.filter(item => 
+      item.name.toLowerCase().includes(val)
+    ).slice(0, 5); // Limit to top 5 results
+
+    if (filtered.length === 0) {
+      suggestionsBox.innerHTML = '';
+      suggestionsBox.classList.add('hidden');
+      return;
+    }
+
+    suggestionsBox.innerHTML = filtered.map(item => `
+      <div class="suggestion-item" data-name="${item.name}" data-category="${item.category}" data-unit="${item.unit}" data-price="${item.estimatedPrice}">
+        <span class="suggestion-name">${item.name}</span>
+        <span class="suggestion-info">${getCategoryEmoji(item.category)} ${item.category}</span>
+      </div>
+    `).join('');
+
+    suggestionsBox.classList.remove('hidden');
+  });
+
+  // Handle clicking on suggestions
+  suggestionsBox.addEventListener('click', (e) => {
+    const item = e.target.closest('.suggestion-item');
+    if (!item) return;
+
+    const name = item.dataset.name;
+    const category = item.dataset.category;
+    const unit = item.dataset.unit;
+    const price = item.dataset.price;
+
+    nameInput.value = name;
+    categoryInput.value = category;
+    unitInput.value = unit;
+    priceInput.value = price;
+
+    suggestionsBox.innerHTML = '';
+    suggestionsBox.classList.add('hidden');
+    qtyInput.focus();
+  });
+
+  // Hide suggestions list when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!nameInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+      suggestionsBox.classList.add('hidden');
+    }
+  });
+
+  // Handle Form Submit (add item)
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const newItem = {
+      name: nameInput.value.trim(),
+      category: categoryInput.value,
+      quantity: parseFloat(qtyInput.value) || 1,
+      unit: unitInput.value,
+      estimatedPrice: parseInt(priceInput.value) || 0
+    };
+
+    try {
+      const response = await fetch('/api/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newItem)
+      });
+
+      if (!response.ok) {
+        throw new Error('Gagal menambahkan barang.');
+      }
+
+      // Reset Form
+      nameInput.value = '';
+      qtyInput.value = '1';
+      priceInput.value = '';
+      unitInput.value = 'pcs';
+      
+      window.showToast('Barang berhasil ditambahkan!');
+      
+      // Dispatch custom event to notify parent page of update
+      window.dispatchEvent(new CustomEvent('items-updated'));
+    } catch (error) {
+      window.showToast(error.message, 'error');
+    }
+  });
+
+  // Helpers
+  function getCategoryEmoji(cat) {
+    switch (cat) {
+      case 'Sayuran': return '🥬';
+      case 'Lauk/Daging': return '🍗';
+      case 'Bumbu': return '🌶️';
+      case 'Sembako': return '🍚';
+      case 'Laundry': return '🧼';
+      case 'Cemilan': return '🍪';
+      default: return '📦';
+    }
+  }
+</script>

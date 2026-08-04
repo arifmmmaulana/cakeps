@@ -1,0 +1,401 @@
+---
+// SSR: Initial fetch isn't strictly necessary since we fetch on client, 
+// but we will build a client-side manager to keep it dynamic.
+---
+
+<div class="card template-card mb-6 animate-slide-up">
+  <!-- Collapsible Header -->
+  <button id="template-toggle-btn" class="template-toggle-btn">
+    <span class="btn-title">📋 Template Belanja</span>
+    <span id="template-toggle-icon" class="toggle-icon">▼</span>
+  </button>
+
+  <!-- Collapsible Content -->
+  <div id="template-content-area" class="template-content hidden">
+    <div class="saved-templates-section">
+      <h4 class="mb-2">Template Tersimpan</h4>
+      <div id="templates-loading" class="text-sm text-muted">Loading templates...</div>
+      <div id="templates-list-container" class="templates-list hidden"></div>
+    </div>
+  </div>
+</div>
+
+<style is:global>
+  .template-card {
+    border-top: 4px solid var(--color-accent);
+    padding: 1rem 1.25rem;
+  }
+  .template-toggle-btn {
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.25rem 0;
+  }
+  .btn-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .toggle-icon {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    transition: transform var(--transition-normal);
+  }
+  .toggle-icon.active {
+    transform: rotate(180deg);
+  }
+  
+  .template-content {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    transition: max-height var(--transition-normal);
+  }
+  .template-content.hidden {
+    display: none;
+  }
+
+  .saved-templates-section h4 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  /* Templates list vertical stack */
+  .templates-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+  
+  .template-row {
+    display: flex;
+    flex-direction: column;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--border-color-solid);
+    gap: 0.5rem;
+    transition: all var(--transition-fast);
+  }
+  .template-row:last-child {
+    border-bottom: none;
+  }
+  .template-row:hover {
+    background-color: var(--bg-surface-hover);
+  }
+  
+  .template-row-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .template-icon {
+    font-size: 1.2rem;
+  }
+  .template-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .template-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .template-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.15rem;
+  }
+  .template-qty-badge {
+    font-weight: 750;
+    color: var(--text-secondary);
+  }
+  
+  .template-price {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    text-align: right;
+    white-space: nowrap;
+  }
+  
+  .template-row-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.25rem;
+  }
+  .template-cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  .chip-cat-summary {
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  .template-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .btn-use-template {
+    background: transparent;
+    border: none;
+    color: var(--color-brand);
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    transition: all var(--transition-fast);
+  }
+  .btn-use-template:hover {
+    background-color: var(--color-brand-light);
+  }
+  
+  .btn-template-delete {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.2rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+  }
+  .btn-template-delete:hover {
+    color: var(--color-danger);
+    background-color: var(--color-danger-light);
+  }
+
+
+</style>
+
+<script>
+  const toggleBtn = document.getElementById('template-toggle-btn');
+  const toggleIcon = document.getElementById('template-toggle-icon');
+  const contentArea = document.getElementById('template-content-area');
+  const listContainer = document.getElementById('templates-list-container');
+  const loadingText = document.getElementById('templates-loading');
+  let cachedTemplates = [];
+
+  const categoryEmojis: Record<string, string> = {
+    'Sayuran': '🥬',
+    'Lauk/Daging': '🍗',
+    'Bumbu': '🌶️',
+    'Sembako': '🍚',
+    'Laundry': '🧼',
+    'Cemilan': '🍪',
+    'Lain-lain': '📦'
+  };
+
+  function formatRupiah(number: number) {
+    return 'Rp ' + new Intl.NumberFormat('id-ID').format(number);
+  }
+
+  function formatDate(dateStr: string) {
+    if (!dateStr) return '';
+    try {
+      const parts = dateStr.split(' ');
+      const dateParts = parts[0].split('-');
+      const year = dateParts[0];
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      const month = monthNames[parseInt(dateParts[1], 10) - 1];
+      const day = dateParts[2];
+      return `${day} ${month} ${year}`;
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+  // Toggle Collapse
+  toggleBtn.addEventListener('click', () => {
+    const isHidden = contentArea.classList.toggle('hidden');
+    toggleIcon.classList.toggle('active', !isHidden);
+    
+    // Fetch if expanded
+    if (!isHidden) {
+      fetchTemplates();
+    }
+  });
+
+  async function fetchTemplates() {
+    loadingText.classList.remove('hidden');
+    listContainer.classList.add('hidden');
+    
+    try {
+      const res = await fetch('/api/templates');
+      if (!res.ok) throw new Error();
+      
+      const templates = await res.json();
+      cachedTemplates = templates;
+      
+      if (templates.length === 0) {
+        loadingText.textContent = 'Belum ada template yang disimpan.';
+        listContainer.innerHTML = '';
+        return;
+      }
+      loadingText.classList.add('hidden');
+      
+      listContainer.innerHTML = templates.map(tpl => {
+        const totalEst = tpl.items.reduce((sum, item) => sum + (item.estimatedPrice * item.quantity), 0);
+        
+        // Group items by category to count items per category
+        const categoryCounts = tpl.items.reduce((acc, item) => {
+          acc[item.category] = (acc[item.category] || 0) + 1;
+          return acc;
+        }, {});
+        
+        const catSummary = Object.keys(categoryCounts).map(cat => {
+          const emoji = categoryEmojis[cat] || '📦';
+          return `<span class="chip-cat-summary" title="${cat}">${emoji} ${categoryCounts[cat]}</span>`;
+        }).join('');
+
+        return `
+          <div class="template-row" data-id="${tpl.id}" style="cursor: pointer;">
+            <div class="template-row-header">
+              <span class="template-icon">📋</span>
+              <div class="template-info">
+                <span class="template-name">${tpl.name}</span>
+                <div class="template-meta">
+                  <span class="template-qty-badge">${tpl.items.length} Barang</span>
+                  <span>•</span>
+                  <span>${formatDate(tpl.createdAt)}</span>
+                </div>
+              </div>
+              <div class="template-price">
+                ${formatRupiah(totalEst)}
+              </div>
+            </div>
+            
+            <div class="template-row-details">
+              <div class="template-cats">
+                ${catSummary}
+              </div>
+              <div class="template-actions">
+                <button class="btn-use-template btn-load-template" data-id="${tpl.id}" title="Gunakan template ini">Gunakan</button>
+                <button class="btn-template-delete btn-delete-template" data-id="${tpl.id}" title="Hapus template">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      listContainer.classList.remove('hidden');
+      attachTemplateEvents();
+    } catch (err) {
+      loadingText.textContent = 'Gagal memuat daftar template.';
+    }
+  }
+
+  function attachTemplateEvents() {
+    // Row click for preview
+    const rows = listContainer.querySelectorAll('.template-row');
+    rows.forEach(row => {
+      row.addEventListener('click', (e) => {
+        // Prevent if clicking on buttons
+        if (e.target.closest('.btn-use-template') || e.target.closest('.btn-template-delete')) return;
+        
+        const id = row.dataset.id;
+        const template = cachedTemplates.find(t => t.id == id);
+        if (template) {
+          (window as any).showTemplatePreview(template);
+        }
+      });
+    });
+
+    // Load button (Gunakan)
+    const loadButtons = listContainer.querySelectorAll('.btn-load-template');
+    loadButtons.forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const button = e.target.closest('.btn-load-template');
+        const id = button.dataset.id;
+        
+        const mode = await (window as any).showTemplateAction(
+          'Gunakan Template',
+          'Pilih cara Anda ingin menggunakan template ini:'
+        );
+
+        if (mode) {
+          try {
+            const res = await fetch('/api/templates', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'load', templateId: id, mode })
+            });
+
+            if (!res.ok) {
+              const errData = await res.json();
+              throw new Error(errData.error || 'Gagal memuat.');
+            }
+
+            // Notify active list to refresh
+            window.dispatchEvent(new CustomEvent('items-updated'));
+            
+            (window as any).showToast('Template berhasil dimuat!');
+          } catch (err) {
+            (window as any).showToast(err.message, 'error');
+          }
+        }
+      });
+    });
+
+    // Delete buttons
+    const deleteButtons = listContainer.querySelectorAll('.btn-delete-template');
+    deleteButtons.forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const button = e.target.closest('.btn-delete-template');
+        const id = button.dataset.id;
+
+        const confirmDelete = await (window as any).showConfirm(
+          'Hapus Template',
+          'Apakah Anda yakin ingin menghapus template ini secara permanen?'
+        );
+
+        if (confirmDelete) {
+          try {
+            const res = await fetch(`/api/templates?id=${id}`, {
+              method: 'DELETE'
+            });
+
+            if (!res.ok) throw new Error();
+
+            (window as any).showToast('Template berhasil dihapus.');
+            fetchTemplates(); // refresh list
+          } catch (err) {
+            (window as any).showToast('Gagal menghapus template.', 'error');
+          }
+        }
+      });
+    });
+  }
+
+  // Listen for template updates from the save button in index.astro
+  window.addEventListener('templates-updated', () => {
+    fetchTemplates();
+  });
+</script>

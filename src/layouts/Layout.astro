@@ -1,0 +1,371 @@
+---
+interface Props {
+  title?: string;
+}
+
+const { title = "Cakeps - Catatan Ke Pasar" } = Astro.props;
+import '../styles/global.css';
+---
+
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    
+    <!-- Meta SEO -->
+    <meta name="description" content="Cakeps (Catatan Ke Pasar) - Aplikasi catatan belanja pintar untuk memudahkan belanja mingguan ke pasar tradisional dengan template berulang dan estimasi harga." />
+    <meta name="theme-color" content="#10b981" />
+    
+    <!-- Theme Detection Script to prevent flash -->
+    <script is:inline>
+      const getTheme = () => {
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+          return localStorage.getItem('theme');
+        }
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          return 'dark';
+        }
+        return 'light';
+      };
+      
+      const theme = getTheme();
+      if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+      }
+    </script>
+  </head>
+  <body>
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <div class="app-container">
+      <slot />
+    </div>
+
+    <!-- UI Utility Script -->
+    <script is:inline>
+      // Toast System
+      window.showToast = (message, type = 'success') => {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        
+        let emoji = '✅';
+        if (type === 'error') emoji = '❌';
+        if (type === 'info') emoji = 'ℹ️';
+        if (type === 'warning') emoji = '⚠️';
+
+        toast.innerHTML = `
+          <span class="toast-icon">${emoji}</span>
+          <span class="toast-message">${message}</span>
+          <button class="toast-close" aria-label="Tutup toast">&times;</button>
+        `;
+        container.appendChild(toast);
+        
+        const removeToast = () => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translate(-50%, -20px) scale(0.95)';
+          setTimeout(() => toast.remove(), 250);
+        };
+
+        toast.querySelector('.toast-close').addEventListener('click', removeToast);
+        
+        // Auto remove
+        setTimeout(() => {
+          if (toast.parentNode) {
+            removeToast();
+          }
+        }, 4000);
+      };
+
+      // Custom Confirmation Modal (replaces browser confirm)
+      window.showConfirm = (title, message) => {
+        return new Promise((resolve) => {
+          const overlay = document.createElement('div');
+          overlay.className = 'custom-modal-overlay';
+          overlay.innerHTML = `
+            <div class="custom-modal">
+              <div class="modal-header">
+                <span class="modal-title">${title}</span>
+                <button class="modal-close-btn" aria-label="Tutup modal">&times;</button>
+              </div>
+              <div class="modal-body">
+                <p>${message}</p>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-secondary btn-cancel">Batal</button>
+                <button class="btn btn-primary btn-confirm">Ya, Lanjutkan</button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+          
+          const close = (val) => {
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+              overlay.remove();
+              resolve(val);
+            }, 200);
+          };
+
+          overlay.querySelector('.modal-close-btn').addEventListener('click', () => close(false));
+          overlay.querySelector('.btn-cancel').addEventListener('click', () => close(false));
+          overlay.querySelector('.btn-confirm').addEventListener('click', () => close(true));
+        });
+      };
+
+      // Custom Modal for Template Action (Tumpuk vs Gabung)
+      window.showTemplateAction = (title, message) => {
+        return new Promise((resolve) => {
+          const overlay = document.createElement('div');
+          overlay.className = 'custom-modal-overlay';
+          overlay.innerHTML = `
+            <div class="custom-modal">
+              <div class="modal-header">
+                <span class="modal-title">${title}</span>
+                <button class="modal-close-btn" aria-label="Tutup modal">&times;</button>
+              </div>
+              <div class="modal-body">
+                <p style="margin-bottom: 1.25rem;">${message}</p>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                  <button class="btn btn-action-overwrite" style="width: 100%; justify-content: flex-start; padding: 0.85rem 1rem; border-radius: 12px; border: 1.5px solid rgba(16, 185, 129, 0.3); background-color: rgba(16, 185, 129, 0.05); color: var(--color-brand); font-weight: 700; text-align: left; transition: all 0.2s; cursor: pointer; display: flex; align-items: flex-start;">
+                    <span style="font-size: 1.2rem; margin-right: 0.75rem;">🔄</span> 
+                    <div style="display: flex; flex-direction: column; text-transform: none;">
+                      <span style="font-size: 0.95rem; font-weight: 750;">Ganti Semua (Tumpuk)</span>
+                      <span style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.4;">Hapus daftar aktif saat ini & gunakan template ini sepenuhnya.</span>
+                    </div>
+                  </button>
+                  <button class="btn btn-action-append" style="width: 100%; justify-content: flex-start; padding: 0.85rem 1rem; border-radius: 12px; border: 1.5px solid rgba(16, 185, 129, 0.3); background-color: rgba(16, 185, 129, 0.05); color: var(--color-brand); font-weight: 700; text-align: left; transition: all 0.2s; cursor: pointer; display: flex; align-items: flex-start;">
+                    <span style="font-size: 1.2rem; margin-right: 0.75rem;">➕</span> 
+                    <div style="display: flex; flex-direction: column; text-transform: none;">
+                      <span style="font-size: 0.95rem; font-weight: 750;">Gabungkan (Tambah)</span>
+                      <span style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.4;">Tambahkan barang di template ini ke bawah daftar saat ini.</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+              <div class="modal-footer" style="margin-top: 1rem; justify-content: center;">
+                <button class="btn btn-secondary btn-cancel" style="width: 100%;">Batal</button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+
+          // Add hover styles dynamically
+          const btnOverwrite = overlay.querySelector('.btn-action-overwrite');
+          const btnAppend = overlay.querySelector('.btn-action-append');
+          
+          btnOverwrite.addEventListener('mouseover', () => {
+            btnOverwrite.style.backgroundColor = 'var(--color-brand)';
+            btnOverwrite.style.color = '#fff';
+            btnOverwrite.querySelectorAll('span')[1].style.color = '#fff';
+            btnOverwrite.querySelectorAll('span')[2].style.color = 'rgba(255,255,255,0.9)';
+          });
+          btnOverwrite.addEventListener('mouseout', () => {
+            btnOverwrite.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
+            btnOverwrite.style.color = 'var(--color-brand)';
+            btnOverwrite.querySelectorAll('span')[1].style.color = 'var(--color-brand)';
+            btnOverwrite.querySelectorAll('span')[2].style.color = 'var(--text-muted)';
+          });
+
+          btnAppend.addEventListener('mouseover', () => {
+            btnAppend.style.backgroundColor = 'var(--color-brand)';
+            btnAppend.style.color = '#fff';
+            btnAppend.querySelectorAll('span')[1].style.color = '#fff';
+            btnAppend.querySelectorAll('span')[2].style.color = 'rgba(255,255,255,0.9)';
+          });
+          btnAppend.addEventListener('mouseout', () => {
+            btnAppend.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
+            btnAppend.style.color = 'var(--color-brand)';
+            btnAppend.querySelectorAll('span')[1].style.color = 'var(--color-brand)';
+            btnAppend.querySelectorAll('span')[2].style.color = 'var(--text-muted)';
+          });
+          
+          const close = (val) => {
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+              overlay.remove();
+              resolve(val);
+            }, 200);
+          };
+
+          overlay.querySelector('.modal-close-btn').addEventListener('click', () => close(null));
+          overlay.querySelector('.btn-cancel').addEventListener('click', () => close(null));
+          
+          btnOverwrite.addEventListener('click', () => close('overwrite'));
+          btnAppend.addEventListener('click', () => close('append'));
+        });
+      };
+
+      // Custom History Completion Celebration Dialog
+      window.showHistoryCompletionDialog = () => {
+        return new Promise((resolve) => {
+          const overlay = document.createElement('div');
+          overlay.className = 'custom-modal-overlay';
+          
+          overlay.innerHTML = `
+            <div class="custom-modal" style="max-width: 400px; text-align: center;">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
+              <h2 style="margin: 0 0 0.5rem 0; font-size: 1.4rem; color: var(--color-brand);">Belanja Selesai!</h2>
+              <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.5;">
+                Selamat! Anda telah menyelesaikan seluruh daftar belanjaan. Daftar ini akan dikosongkan dan disimpan secara otomatis ke dalam Riwayat Belanja.
+              </p>
+              <div class="modal-footer" style="justify-content: space-between; border-top: none; padding-top: 0;">
+                <button class="btn btn-secondary btn-cancel" style="width: 48%;">Belum, Batal</button>
+                <button class="btn btn-primary btn-confirm" style="width: 48%;">Selesaikan</button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+          
+          const close = (val) => {
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+              overlay.remove();
+              resolve(val);
+            }, 200);
+          };
+
+          overlay.querySelector('.btn-cancel').addEventListener('click', () => close(false));
+          overlay.querySelector('.btn-confirm').addEventListener('click', () => close(true));
+        });
+      };
+
+      // Custom Prompt Modal (for entering template name)
+      window.showPrompt = (title, message, placeholder = '') => {
+        return new Promise((resolve) => {
+          const overlay = document.createElement('div');
+          overlay.className = 'custom-modal-overlay';
+          overlay.innerHTML = `
+            <div class="custom-modal">
+              <div class="modal-header">
+                <span class="modal-title">${title}</span>
+                <button class="modal-close-btn" aria-label="Tutup modal">&times;</button>
+              </div>
+              <div class="modal-body">
+                <p style="margin-bottom: 0.75rem;">${message}</p>
+                <input 
+                  type="text" 
+                  id="prompt-input" 
+                  placeholder="${placeholder}" 
+                  autocomplete="off"
+                  style="width: 100%; padding: 0.75rem 1rem; border-radius: 12px; border: 1.5px solid var(--border-color-solid); background-color: var(--bg-surface-solid); color: var(--text-primary); font-family: var(--font-family); font-size: 0.95rem; outline: none;"
+                />
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-secondary btn-cancel">Batal</button>
+                <button class="btn btn-primary btn-confirm">Simpan</button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+          
+          const input = overlay.querySelector('#prompt-input');
+          if (input) {
+            input.focus();
+            
+            // Add focus border-color matching app style
+            input.addEventListener('focus', () => {
+              input.style.borderColor = 'var(--color-brand)';
+              input.style.boxShadow = '0 0 0 4px rgba(16, 185, 129, 0.12)';
+            });
+            input.addEventListener('blur', () => {
+              input.style.borderColor = 'var(--border-color-solid)';
+              input.style.boxShadow = 'none';
+            });
+          }
+
+          const close = (val) => {
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+              overlay.remove();
+              resolve(val);
+            }, 200);
+          };
+
+          overlay.querySelector('.modal-close-btn').addEventListener('click', () => close(null));
+          overlay.querySelector('.btn-cancel').addEventListener('click', () => close(null));
+          overlay.querySelector('.btn-confirm').addEventListener('click', () => {
+            const val = input.value.trim();
+            close(val || null);
+          });
+          
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              const val = input.value.trim();
+              close(val || null);
+            }
+          });
+        });
+      };
+
+      // Custom Template Preview Modal
+      window.showTemplatePreview = (template) => {
+        return new Promise((resolve) => {
+          const overlay = document.createElement('div');
+          overlay.className = 'custom-modal-overlay';
+          
+          let itemsHtml = '<div style="max-height: 50vh; overflow-y: auto; padding-right: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">';
+          
+          if (template.items && template.items.length > 0) {
+            template.items.forEach(item => {
+              const subtotal = item.quantity * item.estimatedPrice;
+              const formatRp = (num) => 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
+              
+              itemsHtml += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border: 1px solid var(--border-color-solid); border-radius: 12px; background-color: var(--bg-surface-solid);">
+                  <div style="display: flex; flex-direction: column;">
+                    <span style="font-weight: 750; font-size: 0.9rem; color: var(--text-primary);">${item.name}</span>
+                    <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-top: 0.2rem;">${item.category} • ${item.quantity} ${item.unit}</span>
+                  </div>
+                  <div style="font-weight: 800; font-size: 0.85rem; color: var(--text-primary);">
+                    ${formatRp(subtotal)}
+                  </div>
+                </div>
+              `;
+            });
+          } else {
+            itemsHtml += `<p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 1rem;">Template kosong</p>`;
+          }
+          itemsHtml += '</div>';
+
+          overlay.innerHTML = `
+            <div class="custom-modal" style="max-width: 450px;">
+              <div class="modal-header">
+                <span class="modal-title">📋 Isi: ${template.name}</span>
+                <button class="modal-close-btn" aria-label="Tutup modal">&times;</button>
+              </div>
+              <div class="modal-body" style="padding-bottom: 0.5rem;">
+                <p style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 1rem;">Berikut adalah daftar barang yang akan dimuat:</p>
+                ${itemsHtml}
+              </div>
+              <div class="modal-footer" style="margin-top: 1rem;">
+                <button class="btn btn-primary btn-confirm" style="width: 100%;">Tutup</button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+          
+          const close = () => {
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+              overlay.remove();
+              resolve();
+            }, 200);
+          };
+
+          overlay.querySelector('.modal-close-btn').addEventListener('click', close);
+          overlay.querySelector('.btn-confirm').addEventListener('click', close);
+        });
+      };
+    </script>
+  </body>
+</html>
