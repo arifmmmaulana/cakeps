@@ -1,8 +1,20 @@
 ---
-import db from '../lib/db';
+import { supabase } from '../lib/supabase';
 
 // SSR: Fetch initial active and completed items list directly on the server
-const initialItems = db.prepare('SELECT * FROM items ORDER BY createdAt DESC').all();
+const { data = [] } = await supabase.from('items').select('*').order('created_at', { ascending: false });
+
+const initialItems = (data || []).map(item => ({
+  id: item.id,
+  name: item.name,
+  category: item.category,
+  quantity: item.quantity,
+  unit: item.unit,
+  estimatedPrice: item.estimated_price,
+  actualPrice: item.actual_price,
+  checked: item.checked ? 1 : 0,
+  createdAt: item.created_at
+}));
 
 // Group items on server
 const activeItems = initialItems.filter(item => !item.checked);

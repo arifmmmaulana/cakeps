@@ -1,8 +1,15 @@
 ---
-import db from '../lib/db';
+import { supabase } from '../lib/supabase';
 
 // SSR: Calculate initial budget and progress values directly on the server
-const items = db.prepare('SELECT * FROM items').all();
+const { data = [] } = await supabase.from('items').select('*');
+
+const items = (data || []).map(item => ({
+  estimatedPrice: item.estimated_price,
+  quantity: item.quantity,
+  actualPrice: item.actual_price,
+  checked: item.checked ? 1 : 0
+}));
 
 const totalEstimation = items.reduce((sum, item) => {
   return sum + (item.estimatedPrice * item.quantity);
