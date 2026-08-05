@@ -165,6 +165,16 @@
 </style>
 
 <script>
+
+  import { supabase } from "../lib/supabase";
+  async function authFetch(url: string, options: any = {}) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    const headers = options.headers || {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return fetch(url, { ...options, headers });
+  }
+  
   const toggleBtn = document.getElementById('history-toggle-btn');
   const toggleIcon = document.getElementById('history-toggle-icon');
   const contentArea = document.getElementById('history-content-area');
@@ -205,7 +215,7 @@
     listContainer.classList.add('hidden');
     
     try {
-      const res = await fetch('/api/history');
+      const res = await authFetch('/api/history');
       if (!res.ok) throw new Error();
       
       const histories = await res.json();
@@ -286,7 +296,7 @@
 
         if (templateName) {
           try {
-            const res = await fetch('/api/templates', {
+            const res = await authFetch('/api/templates', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ action: 'create_from_history', historyId: id, name: templateName })
@@ -316,7 +326,7 @@
 
         if (confirmDelete) {
           try {
-            const res = await fetch(`/api/history?id=${id}`, { method: 'DELETE' });
+            const res = await authFetch(`/api/history?id=${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error();
             
             window.showToast('Riwayat berhasil dihapus.');

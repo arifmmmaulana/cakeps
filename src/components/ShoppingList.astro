@@ -677,6 +677,16 @@ function formatRupiah(number: number) {
 </style>
 
 <script>
+
+  import { supabase } from "../lib/supabase";
+  async function authFetch(url: string, options: any = {}) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    const headers = options.headers || {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return fetch(url, { ...options, headers });
+  }
+  
   const container = document.getElementById('shopping-list-container');
   const loading = document.getElementById('list-loading');
   const content = document.getElementById('list-content');
@@ -713,7 +723,7 @@ function formatRupiah(number: number) {
   async function syncAndRenderItems() {
     if (loading) loading.classList.remove('hidden');
     try {
-      const res = await fetch('/api/items');
+      const res = await authFetch('/api/items');
       if (!res.ok) throw new Error('Gagal mengambil data.');
       
       currentItems = await res.json();
@@ -945,7 +955,7 @@ function formatRupiah(number: number) {
         const checked = e.target.checked;
         
         try {
-          const res = await fetch('/api/items', {
+          const res = await authFetch('/api/items', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id, checked })
@@ -970,7 +980,7 @@ function formatRupiah(number: number) {
         const actualPrice = parseInt(e.target.value) || 0;
 
         try {
-          const res = await fetch('/api/items', {
+          const res = await authFetch('/api/items', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id, actualPrice })
@@ -994,7 +1004,7 @@ function formatRupiah(number: number) {
         const newQty = oldQty < 1 ? Math.round((oldQty + 0.1) * 10) / 10 : oldQty + 1;
 
         try {
-          const res = await fetch('/api/items', {
+          const res = await authFetch('/api/items', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id, quantity: newQty })
@@ -1024,7 +1034,7 @@ function formatRupiah(number: number) {
           : oldQty - 1;
 
         try {
-          const res = await fetch('/api/items', {
+          const res = await authFetch('/api/items', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id, quantity: Math.max(0.1, newQty) })
@@ -1083,7 +1093,7 @@ function formatRupiah(number: number) {
         }
 
         try {
-          const res = await fetch('/api/items', {
+          const res = await authFetch('/api/items', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1121,7 +1131,7 @@ function formatRupiah(number: number) {
 
         if (confirmDelete) {
           try {
-            const res = await fetch(`/api/items?id=${id}`, {
+            const res = await authFetch(`/api/items?id=${id}`, {
               method: 'DELETE'
             });
 
@@ -1147,7 +1157,7 @@ function formatRupiah(number: number) {
 
         if (confirmClear) {
           try {
-            const res = await fetch('/api/items?clearChecked=true', {
+            const res = await authFetch('/api/items?clearChecked=true', {
               method: 'DELETE'
             });
 

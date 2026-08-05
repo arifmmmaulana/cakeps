@@ -1,9 +1,9 @@
-import { supabase } from '../../lib/supabase';
+import { supabase, getAuthClient } from '../../lib/supabase';
 
 export const prerender = false;
 
 // GET: Ambil semua template belanjaan dan item-itemnya
-export async function GET() {
+export async function GET({ request }) {
   try {
     // Supabase can query relational data directly
     const { data: templates, error } = await supabase
@@ -51,7 +51,7 @@ export async function POST({ request }) {
       }
 
       // Ambil semua barang dari daftar belanja aktif saat ini
-      const { data: activeItems, error: activeError } = await supabase.from('items').select('*');
+      const { data: activeItems, error: activeError } = await getAuthClient(request).from('items').select('*');
       if (activeError) throw activeError;
       
       if (!activeItems || activeItems.length === 0) {
@@ -109,7 +109,7 @@ export async function POST({ request }) {
 
       if (mode === 'overwrite') {
         // Kosongkan daftar aktif
-        await supabase.from('items').delete().gt('id', 0);
+        await getAuthClient(request).from('items').delete().gt('id', 0);
       }
 
       if (templateItems && templateItems.length > 0) {
@@ -171,7 +171,7 @@ export async function POST({ request }) {
         estimated_price: item.estimated_price
       }));
 
-      const { error: itemsError } = await supabase.from('template_items').insert(templateItemsData);
+      const { error: itemsError } = await getAuthClient(request).from('template_items').insert(templateItemsData);
       if (itemsError) throw itemsError;
 
       return new Response(JSON.stringify({ success: true, message: `Berhasil menyimpan sebagai template "${name}".` }), {
@@ -187,7 +187,7 @@ export async function POST({ request }) {
 }
 
 // DELETE: Hapus template belanjaan
-export async function DELETE({ url }) {
+export async function DELETE({ request, url }) {
   try {
     const id = url.searchParams.get('id');
     if (!id) {
@@ -195,7 +195,7 @@ export async function DELETE({ url }) {
     }
 
     // Cascade delete akan berjalan secara otomatis di Supabase PostgreSQL
-    const { error } = await supabase.from('templates').delete().eq('id', id);
+    const { error } = await getAuthClient(request).from('templates').delete().eq('id', id);
     if (error) throw error;
 
     return new Response(JSON.stringify({ success: true, message: 'Template berhasil dihapus.' }), { status: 200 });

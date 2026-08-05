@@ -194,6 +194,16 @@
 </style>
 
 <script>
+
+  import { supabase } from "../lib/supabase";
+  async function authFetch(url: string, options: any = {}) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    const headers = options.headers || {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return fetch(url, { ...options, headers });
+  }
+  
   const toggleBtn = document.getElementById('template-toggle-btn');
   const toggleIcon = document.getElementById('template-toggle-icon');
   const contentArea = document.getElementById('template-content-area');
@@ -246,7 +256,7 @@
     listContainer.classList.add('hidden');
     
     try {
-      const res = await fetch('/api/templates');
+      const res = await authFetch('/api/templates');
       if (!res.ok) throw new Error();
       
       const templates = await res.json();
@@ -342,7 +352,7 @@
 
         if (mode) {
           try {
-            const res = await fetch('/api/templates', {
+            const res = await authFetch('/api/templates', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ action: 'load', templateId: id, mode })
@@ -378,7 +388,7 @@
 
         if (confirmDelete) {
           try {
-            const res = await fetch(`/api/templates?id=${id}`, {
+            const res = await authFetch(`/api/templates?id=${id}`, {
               method: 'DELETE'
             });
 

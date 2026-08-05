@@ -1,9 +1,9 @@
-import { supabase } from '../../lib/supabase';
+import { supabase, getAuthClient } from '../../lib/supabase';
 
 export const prerender = false;
 
 // GET: Ambil semua barang belanjaan aktif
-export async function GET() {
+export async function GET({ request }) {
   try {
     const { data, error } = await supabase
       .from('items')
@@ -135,7 +135,7 @@ export async function PUT({ request }) {
 }
 
 // DELETE: Hapus barang
-export async function DELETE({ url }) {
+export async function DELETE({ request, url }) {
   try {
     const id = url.searchParams.get('id');
     const clearChecked = url.searchParams.get('clearChecked') === 'true';
@@ -143,13 +143,13 @@ export async function DELETE({ url }) {
 
     if (clearAll) {
       // Supabase requires a filter for delete. We can delete all items where id > 0
-      const { error } = await supabase.from('items').delete().gt('id', 0);
+      const { error } = await getAuthClient(request).from('items').delete().gt('id', 0);
       if (error) throw error;
       return new Response(JSON.stringify({ success: true, message: 'Semua barang berhasil dihapus.' }), { status: 200 });
     }
 
     if (clearChecked) {
-      const { error } = await supabase.from('items').delete().eq('checked', true);
+      const { error } = await getAuthClient(request).from('items').delete().eq('checked', true);
       if (error) throw error;
       return new Response(JSON.stringify({ success: true, message: 'Barang selesai dibersihkan.' }), { status: 200 });
     }
@@ -158,7 +158,7 @@ export async function DELETE({ url }) {
       return new Response(JSON.stringify({ error: 'ID wajib disertakan untuk penghapusan tunggal.' }), { status: 400 });
     }
 
-    const { error } = await supabase.from('items').delete().eq('id', id);
+    const { error } = await getAuthClient(request).from('items').delete().eq('id', id);
     if (error) throw error;
     
     return new Response(JSON.stringify({ success: true, message: `Barang dengan ID ${id} berhasil dihapus.` }), { status: 200 });

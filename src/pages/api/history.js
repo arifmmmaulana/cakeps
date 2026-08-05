@@ -1,9 +1,9 @@
-import { supabase } from '../../lib/supabase';
+import { supabase, getAuthClient } from '../../lib/supabase';
 
 export const prerender = false;
 
 // GET: Ambil semua riwayat belanja
-export async function GET() {
+export async function GET({ request }) {
   try {
     const { data: histories, error } = await supabase
       .from('history')
@@ -48,7 +48,7 @@ export async function POST({ request }) {
 
     if (action === 'save_current') {
       // 1. Ambil semua barang aktif
-      const { data: activeItems, error: activeError } = await supabase.from('items').select('*');
+      const { data: activeItems, error: activeError } = await getAuthClient(request).from('items').select('*');
       if (activeError) throw activeError;
       
       if (!activeItems || activeItems.length === 0) {
@@ -98,7 +98,7 @@ export async function POST({ request }) {
       if (itemsError) throw itemsError;
 
       // 6. Hapus semua data dari items aktif (kosongkan keranjang)
-      const { error: deleteError } = await supabase.from('items').delete().gt('id', 0);
+      const { error: deleteError } = await getAuthClient(request).from('items').delete().gt('id', 0);
       if (deleteError) throw deleteError;
 
       return new Response(JSON.stringify({ success: true, history: { id: newHistory.id } }), {
@@ -114,7 +114,7 @@ export async function POST({ request }) {
 }
 
 // DELETE: Hapus riwayat spesifik
-export async function DELETE({ url }) {
+export async function DELETE({ request, url }) {
   try {
     const id = url.searchParams.get('id');
     if (!id) {
@@ -122,7 +122,7 @@ export async function DELETE({ url }) {
     }
 
     // Cascade delete automatically removes history_items in PostgreSQL
-    const { error } = await supabase.from('history').delete().eq('id', id);
+    const { error } = await getAuthClient(request).from('history').delete().eq('id', id);
     if (error) throw error;
 
     return new Response(JSON.stringify({ success: true, message: 'Riwayat berhasil dihapus.' }), { status: 200 });

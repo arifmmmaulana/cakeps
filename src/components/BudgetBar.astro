@@ -149,6 +149,16 @@ function formatRupiah(number) {
 </style>
 
 <script>
+
+  import { supabase } from "../lib/supabase";
+  async function authFetch(url: string, options: any = {}) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    const headers = options.headers || {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return fetch(url, { ...options, headers });
+  }
+  
   const progressText = document.getElementById('progress-text');
   const progressPercent = document.getElementById('progress-percent');
   const progressFill = document.getElementById('progress-fill');
@@ -211,7 +221,7 @@ function formatRupiah(number) {
           const confirmSave = await (window as any).showHistoryCompletionDialog();
           if (confirmSave) {
             try {
-              const res = await fetch('/api/history', {
+              const res = await authFetch('/api/history', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'save_current' })
@@ -244,7 +254,7 @@ function formatRupiah(number) {
       
       if (confirmClear) {
         try {
-          const res = await fetch('/api/items?clearAll=true', {
+          const res = await authFetch('/api/items?clearAll=true', {
             method: 'DELETE'
           });
 
