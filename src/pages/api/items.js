@@ -5,7 +5,7 @@ export const prerender = false;
 // GET: Ambil semua barang belanjaan aktif
 export async function GET({ request }) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getAuthClient(request)
       .from('items')
       .select('*')
       .order('created_at', { ascending: false });
@@ -44,7 +44,7 @@ export async function POST({ request }) {
       return new Response(JSON.stringify({ error: 'Nama dan kategori wajib diisi.' }), { status: 400 });
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await getAuthClient(request)
       .from('items')
       .insert({
         name,
@@ -104,7 +104,7 @@ export async function PUT({ request }) {
       return new Response(JSON.stringify({ error: 'Tidak ada data untuk diperbarui.' }), { status: 400 });
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await getAuthClient(request)
       .from('items')
       .update(updates)
       .eq('id', id)

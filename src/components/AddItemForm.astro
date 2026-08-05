@@ -168,6 +168,17 @@ import { suggestions } from '../lib/suggestions';
   }
 </style>
 
+<script>
+  import { supabase } from '../lib/supabase';
+  (window as any).authFetch = async function authFetch(url: string, options: any = {}) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    const headers = options.headers || {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return fetch(url, { ...options, headers });
+  };
+</script>
+
 <script define:vars={{ suggestions }}>
   // Autocomplete suggestions mapping
   const nameInput = document.getElementById('item-name');
@@ -247,7 +258,7 @@ import { suggestions } from '../lib/suggestions';
     };
 
     try {
-      const response = await authFetch('/api/items', {
+      const response = await window.authFetch('/api/items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newItem)

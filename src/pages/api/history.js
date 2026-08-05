@@ -5,7 +5,7 @@ export const prerender = false;
 // GET: Ambil semua riwayat belanja
 export async function GET({ request }) {
   try {
-    const { data: histories, error } = await supabase
+    const { data: histories, error } = await getAuthClient(request)
       .from('history')
       .select('*, items:history_items(*)')
       .order('created_at', { ascending: false });
@@ -67,7 +67,7 @@ export async function POST({ request }) {
       }, 0);
 
       // 3. Insert History Header
-      const { data: newHistory, error: insertError } = await supabase
+      const { data: newHistory, error: insertError } = await getAuthClient(request)
         .from('history')
         .insert({
           total_actual_price: totalActual,
@@ -91,7 +91,7 @@ export async function POST({ request }) {
       }));
 
       // 5. Insert History Items
-      const { error: itemsError } = await supabase
+      const { error: itemsError } = await getAuthClient(request)
         .from('history_items')
         .insert(historyItemsData);
         

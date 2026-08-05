@@ -6,7 +6,7 @@ export const prerender = false;
 export async function GET({ request }) {
   try {
     // Supabase can query relational data directly
-    const { data: templates, error } = await supabase
+    const { data: templates, error } = await getAuthClient(request)
       .from('templates')
       .select('*, items:template_items(*)')
       .order('created_at', { ascending: false });
@@ -62,7 +62,7 @@ export async function POST({ request }) {
       }
 
       // 1. Buat Header Template
-      const { data: newTemplate, error: insertError } = await supabase
+      const { data: newTemplate, error: insertError } = await getAuthClient(request)
         .from('templates')
         .insert({ name })
         .select()
@@ -81,7 +81,7 @@ export async function POST({ request }) {
       }));
 
       // 3. Masukkan semua item secara batch
-      const { error: itemsError } = await supabase
+      const { error: itemsError } = await getAuthClient(request)
         .from('template_items')
         .insert(templateItemsData);
         
@@ -100,7 +100,7 @@ export async function POST({ request }) {
       }
 
       // Ambil item dari template
-      const { data: templateItems, error: fetchError } = await supabase
+      const { data: templateItems, error: fetchError } = await getAuthClient(request)
         .from('template_items')
         .select('*')
         .eq('template_id', templateId);
@@ -123,7 +123,7 @@ export async function POST({ request }) {
           checked: false
         }));
 
-        const { error: insertError } = await supabase
+        const { error: insertError } = await getAuthClient(request)
           .from('items')
           .insert(newActiveItems);
           
@@ -143,7 +143,7 @@ export async function POST({ request }) {
       }
 
       // 1. Fetch History Items
-      const { data: historyItems, error: historyError } = await supabase
+      const { data: historyItems, error: historyError } = await getAuthClient(request)
         .from('history_items')
         .select('*')
         .eq('history_id', historyId);
@@ -154,7 +154,7 @@ export async function POST({ request }) {
       }
 
       // 2. Create Template
-      const { data: newTemplate, error: insertError } = await supabase
+      const { data: newTemplate, error: insertError } = await getAuthClient(request)
         .from('templates')
         .insert({ name })
         .select()

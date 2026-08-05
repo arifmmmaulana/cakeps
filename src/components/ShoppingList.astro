@@ -1,4 +1,5 @@
 ---
+import { Buffer } from 'node:buffer';
 import { supabase } from '../lib/supabase';
 
 // SSR: Fetch initial active and completed items list directly on the server
@@ -777,7 +778,7 @@ function formatRupiah(number: number) {
             <span class="category-badge">${catItems.length} barang</span>
           </div>
           <div class="item-list">
-            ${catItems.map(item => renderItemRow(item)).join('')}
+            ${catItems.map((item: any) => renderItemRow(item)).join('')}
           </div>
         </div>
       `;
@@ -792,7 +793,7 @@ function formatRupiah(number: number) {
             <button class="btn-clear-completed" id="clear-completed-btn">Bersihkan</button>
           </div>
           <div class="item-list">
-            ${completedItems.map(item => renderItemRow(item)).join('')}
+            ${completedItems.map((item: any) => renderItemRow(item)).join('')}
           </div>
         </div>
       `;
