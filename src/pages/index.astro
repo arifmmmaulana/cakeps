@@ -144,6 +144,16 @@ import BudgetBar from '../components/BudgetBar.astro';
 </style>
 
 <script>
+  import { supabase } from '../lib/supabase';
+
+  async function authFetch(url: string, options: any = {}) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    const headers = options.headers || {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return fetch(url, { ...options, headers });
+  }
+
   // Event Save Template (tombol utama) listener
   const saveCurrentBtn = document.getElementById('btn-save-current');
   if (saveCurrentBtn) {
@@ -157,7 +167,7 @@ import BudgetBar from '../components/BudgetBar.astro';
       if (!name) return; // User cancelled or empty
 
       try {
-        const res = await fetch('/api/templates', {
+        const res = await authFetch('/api/templates', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'save', name })
