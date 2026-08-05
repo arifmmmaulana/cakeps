@@ -1189,4 +1189,7 @@ function formatRupiah(number: number) {
 
   // Initial event bindings on page load (progressive enhancement)
   attachEventListeners();
+  
+  // Fetch initial data from server to populate authenticated items
+  syncAndRenderItems();
 </script>
