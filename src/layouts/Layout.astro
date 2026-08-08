@@ -15,11 +15,11 @@ import '../styles/global.css';
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
-    
+
     <!-- Meta SEO -->
     <meta name="description" content="Cakeps (Catatan Ke Pasar) - Aplikasi catatan belanja pintar untuk memudahkan belanja mingguan ke pasar tradisional dengan template berulang dan estimasi harga." />
     <meta name="theme-color" content="#10b981" />
-    
+
     <!-- Theme Detection Script to prevent flash -->
     <script is:inline>
       const getTheme = () => {
@@ -31,7 +31,7 @@ import '../styles/global.css';
         }
         return 'light';
       };
-      
+
       const theme = getTheme();
       if (theme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
@@ -54,10 +54,10 @@ import '../styles/global.css';
       window.showToast = (message, type = 'success') => {
         const container = document.getElementById('toast-container');
         if (!container) return;
-        
+
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
-        
+
         let emoji = '✅';
         if (type === 'error') emoji = '❌';
         if (type === 'info') emoji = 'ℹ️';
@@ -69,7 +69,7 @@ import '../styles/global.css';
           <button class="toast-close" aria-label="Tutup toast">&times;</button>
         `;
         container.appendChild(toast);
-        
+
         const removeToast = () => {
           toast.style.opacity = '0';
           toast.style.transform = 'translateY(-20px) scale(0.95)';
@@ -77,7 +77,7 @@ import '../styles/global.css';
         };
 
         toast.querySelector('.toast-close').addEventListener('click', removeToast);
-        
+
         // Auto remove
         setTimeout(() => {
           if (toast.parentNode) {
@@ -107,7 +107,7 @@ import '../styles/global.css';
             </div>
           `;
           document.body.appendChild(overlay);
-          
+
           const close = (val) => {
             overlay.style.opacity = '0';
             setTimeout(() => {
@@ -137,14 +137,14 @@ import '../styles/global.css';
                 <p style="margin-bottom: 1.25rem;">${message}</p>
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                   <button class="btn btn-action-overwrite" style="width: 100%; justify-content: flex-start; padding: 0.85rem 1rem; border-radius: 12px; border: 1.5px solid rgba(16, 185, 129, 0.3); background-color: rgba(16, 185, 129, 0.05); color: var(--color-brand); font-weight: 700; text-align: left; transition: all 0.2s; cursor: pointer; display: flex; align-items: flex-start;">
-                    <span style="font-size: 1.2rem; margin-right: 0.75rem;">🔄</span> 
+                    <span style="font-size: 1.2rem; margin-right: 0.75rem;">🔄</span>
                     <div style="display: flex; flex-direction: column; text-transform: none;">
                       <span style="font-size: 0.95rem; font-weight: 750;">Ganti Semua (Tumpuk)</span>
                       <span style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.4;">Hapus daftar aktif saat ini & gunakan template ini sepenuhnya.</span>
                     </div>
                   </button>
                   <button class="btn btn-action-append" style="width: 100%; justify-content: flex-start; padding: 0.85rem 1rem; border-radius: 12px; border: 1.5px solid rgba(16, 185, 129, 0.3); background-color: rgba(16, 185, 129, 0.05); color: var(--color-brand); font-weight: 700; text-align: left; transition: all 0.2s; cursor: pointer; display: flex; align-items: flex-start;">
-                    <span style="font-size: 1.2rem; margin-right: 0.75rem;">➕</span> 
+                    <span style="font-size: 1.2rem; margin-right: 0.75rem;">➕</span>
                     <div style="display: flex; flex-direction: column; text-transform: none;">
                       <span style="font-size: 0.95rem; font-weight: 750;">Gabungkan (Tambah)</span>
                       <span style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.4;">Tambahkan barang di template ini ke bawah daftar saat ini.</span>
@@ -162,7 +162,7 @@ import '../styles/global.css';
           // Add hover styles dynamically
           const btnOverwrite = overlay.querySelector('.btn-action-overwrite');
           const btnAppend = overlay.querySelector('.btn-action-append');
-          
+
           btnOverwrite.addEventListener('mouseover', () => {
             btnOverwrite.style.backgroundColor = 'var(--color-brand)';
             btnOverwrite.style.color = '#fff';
@@ -188,7 +188,7 @@ import '../styles/global.css';
             btnAppend.querySelectorAll('span')[1].style.color = 'var(--color-brand)';
             btnAppend.querySelectorAll('span')[2].style.color = 'var(--text-muted)';
           });
-          
+
           const close = (val) => {
             overlay.style.opacity = '0';
             setTimeout(() => {
@@ -199,7 +199,7 @@ import '../styles/global.css';
 
           overlay.querySelector('.modal-close-btn').addEventListener('click', () => close(null));
           overlay.querySelector('.btn-cancel').addEventListener('click', () => close(null));
-          
+
           btnOverwrite.addEventListener('click', () => close('overwrite'));
           btnAppend.addEventListener('click', () => close('append'));
         });
@@ -210,7 +210,7 @@ import '../styles/global.css';
         return new Promise((resolve) => {
           const overlay = document.createElement('div');
           overlay.className = 'custom-modal-overlay';
-          
+
           overlay.innerHTML = `
             <div class="custom-modal" style="max-width: 400px; text-align: center;">
               <div style="font-size: 3rem; margin-bottom: 0.5rem;">🏆</div>
@@ -225,7 +225,7 @@ import '../styles/global.css';
             </div>
           `;
           document.body.appendChild(overlay);
-          
+
           const close = (val) => {
             overlay.style.opacity = '0';
             setTimeout(() => {
@@ -252,10 +252,10 @@ import '../styles/global.css';
               </div>
               <div class="modal-body">
                 <p style="margin-bottom: 0.75rem;">${message}</p>
-                <input 
-                  type="text" 
-                  id="prompt-input" 
-                  placeholder="${placeholder}" 
+                <input
+                  type="text"
+                  id="prompt-input"
+                  placeholder="${placeholder}"
                   autocomplete="off"
                   style="width: 100%; padding: 0.75rem 1rem; border-radius: 12px; border: 1.5px solid var(--border-color-solid); background-color: var(--bg-surface-solid); color: var(--text-primary); font-family: var(--font-family); font-size: 0.95rem; outline: none;"
                 />
@@ -267,11 +267,11 @@ import '../styles/global.css';
             </div>
           `;
           document.body.appendChild(overlay);
-          
+
           const input = overlay.querySelector('#prompt-input');
           if (input) {
             input.focus();
-            
+
             // Add focus border-color matching app style
             input.addEventListener('focus', () => {
               input.style.borderColor = 'var(--color-brand)';
@@ -297,7 +297,7 @@ import '../styles/global.css';
             const val = input.value.trim();
             close(val || null);
           });
-          
+
           input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
               const val = input.value.trim();
@@ -312,14 +312,14 @@ import '../styles/global.css';
         return new Promise((resolve) => {
           const overlay = document.createElement('div');
           overlay.className = 'custom-modal-overlay';
-          
+
           let itemsHtml = '<div style="max-height: 50vh; overflow-y: auto; padding-right: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">';
-          
+
           if (template.items && template.items.length > 0) {
             template.items.forEach(item => {
               const subtotal = item.quantity * item.estimatedPrice;
               const formatRp = (num) => 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
-              
+
               itemsHtml += `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border: 1px solid var(--border-color-solid); border-radius: 12px; background-color: var(--bg-surface-solid);">
                   <div style="display: flex; flex-direction: column;">
@@ -344,7 +344,7 @@ import '../styles/global.css';
                 <button class="modal-close-btn" aria-label="Tutup modal">&times;</button>
               </div>
               <div class="modal-body" style="padding-bottom: 0.5rem;">
-                <p style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 1rem;">Berikut adalah daftar barang yang akan dimuat:</p>
+                <p style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 1rem;">Berikut adalah daftar barang yang telah dibeli:</p>
                 ${itemsHtml}
               </div>
               <div class="modal-footer" style="margin-top: 1rem;">
@@ -353,7 +353,7 @@ import '../styles/global.css';
             </div>
           `;
           document.body.appendChild(overlay);
-          
+
           const close = () => {
             overlay.style.opacity = '0';
             setTimeout(() => {
